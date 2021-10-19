@@ -76,8 +76,49 @@ std::optional<Halfedge_Mesh::VertexRef> Halfedge_Mesh::collapse_face(Halfedge_Me
 */
 std::optional<Halfedge_Mesh::EdgeRef> Halfedge_Mesh::flip_edge(Halfedge_Mesh::EdgeRef e) {
 
-    (void)e;
-    return std::nullopt;
+    Halfedge_Mesh::HalfedgeRef mainEdge = e->halfedge();
+    Halfedge_Mesh::HalfedgeRef mainNextEdge = mainEdge->next();
+    Halfedge_Mesh::HalfedgeRef mainPrevEdge = mainEdge;
+    Halfedge_Mesh::HalfedgeRef mainPrevPrevEdge = mainEdge;
+    Halfedge_Mesh::FaceRef mainFace = mainEdge->face();
+    while(mainPrevEdge->next() != mainEdge) {
+        mainPrevPrevEdge = mainPrevEdge;
+        mainPrevEdge = mainPrevEdge->next();
+    }
+    Halfedge_Mesh::VertexRef mainVertex = mainEdge->vertex();
+    Halfedge_Mesh::HalfedgeRef twinEdge = mainEdge->twin();
+    Halfedge_Mesh::HalfedgeRef twinNextEdge = twinEdge->next();
+    Halfedge_Mesh::HalfedgeRef twinPrevEdge = twinEdge;
+    Halfedge_Mesh::HalfedgeRef twinPrevPrevEdge = twinEdge;
+    Halfedge_Mesh::FaceRef twinFace = twinEdge->face();
+    while(twinPrevEdge->next() != twinEdge) {
+        twinPrevPrevEdge = twinPrevEdge;
+        twinPrevEdge = twinPrevEdge->next();
+    }
+
+    Halfedge_Mesh::VertexRef twinVertex = twinEdge->vertex();
+
+    mainVertex->_halfedge = twinNextEdge;
+    mainFace->_halfedge = mainEdge;
+
+    mainPrevPrevEdge->set_neighbors(mainEdge, mainPrevPrevEdge->twin(), mainPrevPrevEdge->vertex(),
+                                    mainPrevPrevEdge->edge(), mainPrevPrevEdge->face());
+    mainPrevEdge->set_neighbors(twinNextEdge, mainPrevEdge->twin(), mainPrevEdge->vertex(),
+                                mainPrevEdge->edge(), twinFace);
+    mainEdge->set_neighbors(twinPrevEdge, twinEdge, mainPrevEdge->vertex(), mainEdge->edge(),
+                            mainEdge->face());
+
+    twinVertex->_halfedge = mainNextEdge;
+    twinFace->_halfedge = twinEdge;
+
+    twinPrevPrevEdge->set_neighbors(twinEdge, twinPrevPrevEdge->twin(), twinPrevPrevEdge->vertex(),
+                                    twinPrevPrevEdge->edge(), twinPrevPrevEdge->face());
+    twinPrevEdge->set_neighbors(mainNextEdge, twinPrevEdge->twin(), twinPrevEdge->vertex(),
+                                twinPrevEdge->edge(), mainFace);
+    twinEdge->set_neighbors(mainPrevEdge, mainEdge, twinPrevEdge->vertex(), twinEdge->edge(),
+                            twinEdge->face());
+
+    return e;
 }
 
 /*
@@ -108,8 +149,8 @@ std::optional<Halfedge_Mesh::VertexRef> Halfedge_Mesh::split_edge(Halfedge_Mesh:
     parameters. These functions are also passed an array of the original vertex
     positions: for bevel_vertex, it has one element, the original vertex position,
     for bevel_edge, two for the two vertices, and for bevel_face, it has the original
-    position of each vertex in order starting from face->halfedge. You should use these 
-    positions, as well as the normal and tangent offset fields to assign positions to 
+    position of each vertex in order starting from face->halfedge. You should use these
+    positions, as well as the normal and tangent offset fields to assign positions to
     the new vertices.
 
     Finally, note that the normal and tangent offsets are not relative values - you
@@ -205,7 +246,7 @@ void Halfedge_Mesh::bevel_vertex_positions(const std::vector<Vec3>& start_positi
     (in the orig array) to compute an offset vertex position.
 
     Note that there is a 1-to-1 correspondence between halfedges in
-    newHalfedges and vertex positions in start_positions. So, you can write 
+    newHalfedges and vertex positions in start_positions. So, you can write
     loops of the form:
 
     for(size_t i = 0; i < new_halfedges.size(); i++)
@@ -242,7 +283,7 @@ void Halfedge_Mesh::bevel_edge_positions(const std::vector<Vec3>& start_position
     position.
 
     Note that there is a 1-to-1 correspondence between halfedges in
-    new_halfedges and vertex positions in start_positions. So, you can write 
+    new_halfedges and vertex positions in start_positions. So, you can write
     loops of the form:
 
     for(size_t i = 0; i < new_halfedges.size(); i++)
@@ -387,24 +428,24 @@ void Halfedge_Mesh::loop_subdivide() {
     // the new subdivided (fine) mesh, which has more elements to traverse.  We
     // will then assign vertex positions in
     // the new mesh based on the values we computed for the original mesh.
-    
+
     // Compute new positions for all the vertices in the input mesh using
     // the Loop subdivision rule and store them in Vertex::new_pos.
     //    At this point, we also want to mark each vertex as being a vertex of the
     //    original mesh. Use Vertex::is_new for this.
-    
+
     // Next, compute the subdivided vertex positions associated with edges, and
     // store them in Edge::new_pos.
-    
+
     // Next, we're going to split every edge in the mesh, in any order.
-    // We're also going to distinguish subdivided edges that came from splitting 
-    // an edge in the original mesh from new edges by setting the boolean Edge::is_new. 
+    // We're also going to distinguish subdivided edges that came from splitting
+    // an edge in the original mesh from new edges by setting the boolean Edge::is_new.
     // Note that in this loop, we only want to iterate over edges of the original mesh.
     // Otherwise, we'll end up splitting edges that we just split (and the
     // loop will never end!)
-    
+
     // Now flip any new edge that connects an old and new vertex.
-    
+
     // Finally, copy new vertex positions into the Vertex::pos.
 }
 
