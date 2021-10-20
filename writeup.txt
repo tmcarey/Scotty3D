@@ -1,0 +1,1 @@
+Just finished EdgeCollapse, EdgeFlip, EdgeSplit and FaceBevel
