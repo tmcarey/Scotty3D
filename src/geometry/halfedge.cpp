@@ -374,7 +374,6 @@ std::optional<std::pair<Halfedge_Mesh::ElementRef, std::string>> Halfedge_Mesh::
         bool finite = std::isfinite(p.x) && std::isfinite(p.y) && std::isfinite(p.z);
         if(!finite) return {{v, "A vertex position was set to a non-finite value."}};
     }
-
     std::set<HalfedgeRef> permutation;
 
     // Check valid halfedge permutation
