@@ -37,6 +37,16 @@
 std::optional<Halfedge_Mesh::FaceRef> Halfedge_Mesh::erase_vertex(Halfedge_Mesh::VertexRef v) {
 
     (void)v;
+    auto h = v->halfedge();
+    bool twinFlag = true;
+    do {
+        if(twinFlag){
+            h = h->twin();
+        }else{
+            h = h->next();
+        }
+        twinFlag = !twinFlag;
+    } while(h != v->halfedge());
     return std::nullopt;
 }
 
@@ -126,11 +136,66 @@ std::optional<Halfedge_Mesh::VertexRef> Halfedge_Mesh::split_edge(Halfedge_Mesh:
 */
 std::optional<Halfedge_Mesh::FaceRef> Halfedge_Mesh::bevel_vertex(Halfedge_Mesh::VertexRef v) {
 
+    auto h = v->halfedge();
+    int newEdgeCount = 0;
+    do {
+        h = h->twin();
+        h = h->next();
+        newEdgeCount++;
+    } while(h != v->halfedge());
+
+    if(newEdgeCount < 3){
+      return std::nullopt;
+    }
+
     // Reminder: You should set the positions of new vertices (v->pos) to be exactly
     // the same as wherever they "started from."
+    h = v->halfedge();
+    auto newFace = new_face();
+    auto newHEdge = new_halfedge();
+    auto newHEdgeTwin = new_halfedge();
+    auto newVertex = new_vertex();
+    auto newEdge = new_edge();
+    newFace->_halfedge = newHEdgeTwin;
+    auto firstEdgeTwin = newHEdgeTwin;
+    for(int i = 1; i < newEdgeCount; i++){
+    }
+    auto prev = h;
+    while(prev->next() != h){
+        prev = prev->next();
+    }
+    newEdge->_halfedge = newHEdge;
+    prev->set_neighbors (newHEdge, prev->twin(), prev->vertex(), prev->edge(), prev->face());
+    newHEdge->set_neighbors(h, newHEdgeTwin, newVertex, newEdge, h->face());
+    newHEdgeTwin->set_neighbors(h, newHEdge, newVertex, newEdge, newFace);
+    auto lastEdgeTwin = newHEdgeTwin;
+    auto lastOriginalTwin = h->twin();
+    h = h->twin();
+    h = h->next();
+    while(h != v->halfedge()){
+        newHEdge = new_halfedge();
+        newHEdgeTwin = new_halfedge();
+        newVertex = new_vertex();
+        newEdge = new_edge();
+        newEdge->_halfedge = newHEdge;
+        lastOriginalTwin->set_neighbors(newHEdge, lastOriginalTwin->twin(), lastOriginalTwin->vertex(), lastEdgeTwin->edge(), lastEdgeTwin->face());
+        prev = h;
+        while(prev->next() != h){
+            prev = prev->next();
+        }
+        h->set_neighbors(h->next(), h->twin(), newVertex, h->edge(), h->face());
+        prev->set_neighbors (newHEdge, prev->twin(), prev->vertex(), prev->edge(), prev->face());
+        newHEdge->set_neighbors(h, newHEdgeTwin, newVertex, newEdge, newFace);
+        newHEdgeTwin->set_neighbors(lastEdgeTwin, newHEdge, newVertex, newEdge, newFace);
+        lastEdgeTwin = newHEdgeTwin;
+        h = h->twin();
+        h = h->next();
+    } 
+    firstEdgeTwin->set_neighbors(lastEdgeTwin, firstEdgeTwin->twin(), firstEdgeTwin->vertex(), firstEdgeTwin->edge(), firstEdgeTwin->face());
 
-    (void)v;
-    return std::nullopt;
+
+    erase(v);
+    return newFace;
 }
 
 /*
@@ -262,6 +327,21 @@ void Halfedge_Mesh::bevel_face_positions(const std::vector<Vec3>& start_position
         new_halfedges.push_back(h);
         h = h->next();
     } while(h != face->halfedge());
+
+    Vec3 avg = Vec3(0, 0, 0);
+    for (uint i = 0; i < start_positions.size(); i++){
+        avg += start_positions[i];
+    }
+    avg /= start_positions.size();
+
+    auto it = h;
+    uint i = 0; 
+    do{
+        Vec3 tangent = (avg - start_positions[i]).normalize();
+        it->vertex()->pos = start_positions[i] + (face->normal() * normal_offset) + (tangent_offset * tangent);
+        it = it->next();
+        i++;
+    } while(it != h);
 
     (void)new_halfedges;
     (void)start_positions;
