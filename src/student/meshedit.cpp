@@ -55,9 +55,46 @@ std::optional<Halfedge_Mesh::FaceRef> Halfedge_Mesh::erase_vertex(Halfedge_Mesh:
     merged face.
  */
 std::optional<Halfedge_Mesh::FaceRef> Halfedge_Mesh::erase_edge(Halfedge_Mesh::EdgeRef e) {
+    Halfedge_Mesh::HalfedgeRef mainEdge = e->_halfedge;
+    Halfedge_Mesh::HalfedgeRef mainNext = mainEdge->next();
+    Halfedge_Mesh::HalfedgeRef mainPrev = mainEdge;
+    while(mainPrev->next() != mainEdge) {
+        mainPrev = mainPrev->next();
+    }
 
-    (void)e;
-    return std::nullopt;
+    Halfedge_Mesh::HalfedgeRef twinEdge = mainEdge->twin();
+    Halfedge_Mesh::HalfedgeRef twinNext = twinEdge->next();
+    Halfedge_Mesh::HalfedgeRef twinPrev = twinEdge;
+    while(twinPrev->next() != twinEdge) {
+        twinPrev = twinPrev->next();
+    }
+
+    auto mainFace = mainEdge->face();
+    twinPrev->_next = mainNext;
+    mainPrev->_next = twinNext;
+    mainEdge->vertex()->_halfedge = twinNext;
+    twinEdge->vertex()->_halfedge = mainNext;
+    if(mainEdge == mainEdge->twin()->next()){
+        erase(mainEdge->vertex());
+    }
+    if(twinEdge == twinEdge->twin()->next()){
+        erase(twinEdge->vertex());
+    }
+    erase(mainEdge->_edge);
+    erase(mainEdge);
+    erase(twinEdge);
+    mainFace->_halfedge = mainNext;
+    if(mainFace != twinEdge->face()){
+        erase(twinEdge->face());
+    }
+
+    auto it = mainNext;
+    do{
+        it->_face = mainFace;
+        it = it->next();
+    }while(it != mainNext);
+
+    return mainFace;
 }
 
 /*
@@ -542,16 +579,22 @@ void Halfedge_Mesh::bevel_face_positions(const std::vector<Vec3>& start_position
     } while(h != face->halfedge());
 
     Vec3 avg = Vec3(0, 0, 0);
-    for (uint i = 0; i < start_positions.size(); i++){
+    Vec3 n = Vec3(0, 0, 0);
+    size_t posCount = start_positions.size();
+    for (uint i = 0; i < posCount; i++){
+        Vec3 pi = start_positions[i];
+        Vec3 pj = start_positions[(i + 1) % posCount];
+        n += cross(pi, pj);
         avg += start_positions[i];
     }
     avg /= start_positions.size();
+    n = n.unit();
 
     auto it = h;
     uint i = 0; 
     do{
-        Vec3 tangent = (avg - start_positions[i]).normalize();
-        it->vertex()->pos = start_positions[i] + (face->normal() * normal_offset) + (tangent_offset * tangent);
+        Vec3 tangent = (avg - start_positions[i]);
+        it->vertex()->pos = start_positions[i] + (n * normal_offset * -1.) + (tangent_offset * tangent);
         it = it->next();
         i++;
     } while(it != h);
@@ -563,12 +606,52 @@ void Halfedge_Mesh::bevel_face_positions(const std::vector<Vec3>& start_position
     (void)normal_offset;
 }
 
+void Halfedge_Mesh::triangulateFace(Halfedge_Mesh::FaceRef face){
+    auto h = face->halfedge();
+    auto startEdge = face->halfedge();
+    int i = 1;
+    do{
+        if(i >= 3 && startEdge != h->next()){
+            auto splitEdge = h;
+            auto prevStartEdge = startEdge;
+            while(prevStartEdge->next() != startEdge) {
+                prevStartEdge = prevStartEdge->next();
+            }
+            auto prevSplitEdge = startEdge->next();
+            auto splitFace = new_face();
+            auto splitFullEdge = new_edge();
+            auto splitHEdgeMain = new_halfedge();
+            auto splitHEdgeTwin = new_halfedge();
+
+            prevStartEdge->set_neighbors(splitHEdgeMain, prevStartEdge->twin(), prevStartEdge->vertex(), prevStartEdge->edge(), splitFace);
+            prevSplitEdge->_next = splitHEdgeTwin;
+            splitFace->_halfedge = splitHEdgeMain;
+            splitFullEdge->_halfedge = splitHEdgeMain;
+            splitHEdgeMain->set_neighbors(splitEdge, splitHEdgeTwin, startEdge->vertex(), splitFullEdge, splitFace);
+            splitHEdgeTwin->set_neighbors(startEdge, splitHEdgeMain, splitEdge->vertex(), splitFullEdge, face);
+            auto it = splitEdge;
+            do{
+                it->_face = splitFace;
+                it = it->next();
+            }while(it != splitEdge);
+
+            return;
+        }
+        h = h->next();
+        i++;
+    }while(startEdge != h);
+}
+
 /*
     Splits all non-triangular faces into triangles.
 */
 void Halfedge_Mesh::triangulate() {
 
     // For each face...
+    for(auto it = faces_begin(); it != faces_end(); it++){
+        triangulateFace(it);
+    }
+
 }
 
 /* Note on the quad subdivision process:
@@ -631,13 +714,34 @@ void Halfedge_Mesh::linear_subdivide_positions() {
 
     // For each vertex, assign Vertex::new_pos to
     // its original position, Vertex::pos.
+    for(auto it = vertices_begin(); it != vertices_end(); it++){
+        it->new_pos = it->pos;
+    }
 
     // For each edge, assign the midpoint of the two original
     // positions to Edge::new_pos.
+    for(auto it = edges_begin(); it != edges_end(); it++){
+        Vec3 total = Vec3(0, 0, 0);
+        total += it->halfedge()->vertex()->pos;
+        total += it->halfedge()->twin()->vertex()->pos;
+        it->new_pos = total / 2;
+    }
+
 
     // For each face, assign the centroid (i.e., arithmetic mean)
     // of the original vertex positions to Face::new_pos. Note
     // that in general, NOT all faces will be triangles!
+    for(auto it = faces_begin(); it != faces_end(); it++){
+        Vec3 total = Vec3(0, 0, 0);
+        auto h_it = it->_halfedge;
+        int i = 0;
+        do{
+            total += h_it->vertex()->pos;
+            h_it = h_it->next();
+            i++;
+        }while(h_it != it->_halfedge);
+        it->new_pos = total / i;
+    }
 }
 
 /*
@@ -659,10 +763,48 @@ void Halfedge_Mesh::catmullclark_subdivide_positions() {
     // rules. (These rules are outlined in the Developer Manual.)
 
     // Faces
+    for(auto it = faces_begin(); it != faces_end(); it++){
+        Vec3 total = Vec3(0, 0, 0);
+        auto h_it = it->_halfedge;
+        int i = 0;
+        do{
+            total += h_it->vertex()->pos;
+            h_it = h_it->next();
+            i++;
+        }while(h_it != it->_halfedge);
+        it->new_pos = total / i;
+    }
 
     // Edges
+    for(auto it = edges_begin(); it != edges_end(); it++){
+        Vec3 total = Vec3(0, 0, 0);
+        total += it->halfedge()->face()->new_pos;
+        total += it->halfedge()->twin()->face()->new_pos;
+        total += it->halfedge()->vertex()->pos;
+        total += it->halfedge()->twin()->vertex()->pos;
+        it->new_pos = total / 4;
+    }
 
     // Vertices
+    for(auto it = vertices_begin(); it != vertices_end(); it++){
+        Vec3 q;
+        Vec3 r;
+        Vec3 s = it->pos;
+        auto h_it = it->halfedge();
+        uint count = 0;
+        do{
+            Vec3 edgeSum = it->pos + h_it->twin()->vertex()->pos;
+            r += edgeSum / 2;
+            q += h_it->face()->new_pos;
+            h_it = h_it->twin()->next();
+            count++;
+        }while(h_it != it->halfedge());
+        r /= count;
+        q /= count;
+
+        it->new_pos = (q + (2 * r) + (count - 3) * s) / count;
+    }
+
 }
 
 /*

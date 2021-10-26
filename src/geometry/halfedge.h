@@ -196,6 +196,8 @@ public:
     // Specifically, when you need to collapse an edge in iostropic_remesh() or simplify(),
     // you should call collapse_edge_erase() instead of collapse_edge()
 
+    void triangulateFace(FaceRef f);
+
     /*
         Merge all faces incident on a given vertex, returning a
         pointer to the merged face.
