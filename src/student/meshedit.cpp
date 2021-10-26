@@ -66,8 +66,65 @@ std::optional<Halfedge_Mesh::FaceRef> Halfedge_Mesh::erase_edge(Halfedge_Mesh::E
 */
 std::optional<Halfedge_Mesh::VertexRef> Halfedge_Mesh::collapse_edge(Halfedge_Mesh::EdgeRef e) {
 
-    (void)e;
-    return std::nullopt;
+    Halfedge_Mesh::HalfedgeRef mainEdge = e->halfedge();
+    Halfedge_Mesh::HalfedgeRef mainEdgeNext = mainEdge->next();
+    Halfedge_Mesh::HalfedgeRef mainPrevEdge = mainEdge;
+    Halfedge_Mesh::FaceRef mainFace = mainEdge->face();
+    while(mainPrevEdge->next() != mainEdge) {
+        mainPrevEdge = mainPrevEdge->next();
+    }
+
+    Halfedge_Mesh::HalfedgeRef twinEdge = mainEdge->twin();
+    Halfedge_Mesh::HalfedgeRef twinEdgeNext = twinEdge->next();
+    Halfedge_Mesh::HalfedgeRef twinPrevEdge = twinEdge;
+    Halfedge_Mesh::FaceRef twinFace = twinEdge->face();
+    while(twinPrevEdge->next() != twinEdge) {
+        twinPrevEdge = twinPrevEdge->next();
+    }
+
+    Halfedge_Mesh::VertexRef toErase = mainEdge->vertex();
+    Halfedge_Mesh::VertexRef replacer = twinEdge->vertex();
+    Halfedge_Mesh::HalfedgeRef it = mainEdge;
+    do {
+        it->_vertex = replacer;
+        it = it->twin()->next();
+    } while(it != mainEdge);
+
+    mainPrevEdge->_next = mainEdgeNext;
+    mainFace->_halfedge = mainEdgeNext;
+    if(mainPrevEdge->next() == mainEdgeNext) {
+        mainPrevEdge->twin()->_twin = mainEdgeNext->twin();
+        mainPrevEdge->vertex()->_halfedge = mainEdgeNext->twin();
+        mainEdgeNext->twin()->_twin = mainPrevEdge->twin();
+        mainPrevEdge->edge()->_halfedge = mainPrevEdge->twin();
+        mainEdgeNext->twin()->_edge = mainPrevEdge->edge();
+        erase(mainEdgeNext->edge());
+        erase(mainPrevEdge);
+        erase(mainEdgeNext);
+        erase(mainFace);
+    }
+    twinPrevEdge->_next = twinEdgeNext;
+    twinFace->_halfedge = twinEdgeNext;
+    if(twinPrevEdge->next() == twinEdgeNext) {
+        twinPrevEdge->twin()->_twin = twinEdgeNext->twin();
+        twinPrevEdge->vertex()->_halfedge = twinEdgeNext->twin();
+        twinEdgeNext->twin()->_twin = twinPrevEdge->twin();
+        twinPrevEdge->edge()->_halfedge = twinPrevEdge->twin();
+        twinEdgeNext->twin()->_edge = twinPrevEdge->edge();
+        erase(twinEdgeNext->edge());
+        erase(twinPrevEdge);
+        erase(twinEdgeNext);
+        erase(twinFace);
+    }
+
+    replacer->pos = (replacer->pos + toErase->pos) * 0.5f;
+    replacer->_halfedge = twinPrevEdge->twin();
+
+    erase(mainEdge);
+    erase(twinEdge);
+    erase(toErase);
+    erase(e);
+    return replacer;
 }
 
 /*
@@ -86,8 +143,49 @@ std::optional<Halfedge_Mesh::VertexRef> Halfedge_Mesh::collapse_face(Halfedge_Me
 */
 std::optional<Halfedge_Mesh::EdgeRef> Halfedge_Mesh::flip_edge(Halfedge_Mesh::EdgeRef e) {
 
-    (void)e;
-    return std::nullopt;
+    Halfedge_Mesh::HalfedgeRef mainEdge = e->halfedge();
+    Halfedge_Mesh::HalfedgeRef mainNextEdge = mainEdge->next();
+    Halfedge_Mesh::HalfedgeRef mainPrevEdge = mainEdge;
+    Halfedge_Mesh::HalfedgeRef mainPrevPrevEdge = mainEdge;
+    Halfedge_Mesh::FaceRef mainFace = mainEdge->face();
+    while(mainPrevEdge->next() != mainEdge) {
+        mainPrevPrevEdge = mainPrevEdge;
+        mainPrevEdge = mainPrevEdge->next();
+    }
+    Halfedge_Mesh::VertexRef mainVertex = mainEdge->vertex();
+    Halfedge_Mesh::HalfedgeRef twinEdge = mainEdge->twin();
+    Halfedge_Mesh::HalfedgeRef twinNextEdge = twinEdge->next();
+    Halfedge_Mesh::HalfedgeRef twinPrevEdge = twinEdge;
+    Halfedge_Mesh::HalfedgeRef twinPrevPrevEdge = twinEdge;
+    Halfedge_Mesh::FaceRef twinFace = twinEdge->face();
+    while(twinPrevEdge->next() != twinEdge) {
+        twinPrevPrevEdge = twinPrevEdge;
+        twinPrevEdge = twinPrevEdge->next();
+    }
+
+    Halfedge_Mesh::VertexRef twinVertex = twinEdge->vertex();
+
+    mainVertex->_halfedge = twinNextEdge;
+    mainFace->_halfedge = mainEdge;
+
+    mainPrevPrevEdge->set_neighbors(mainEdge, mainPrevPrevEdge->twin(), mainPrevPrevEdge->vertex(),
+                                    mainPrevPrevEdge->edge(), mainPrevPrevEdge->face());
+    mainPrevEdge->set_neighbors(twinNextEdge, mainPrevEdge->twin(), mainPrevEdge->vertex(),
+                                mainPrevEdge->edge(), twinFace);
+    mainEdge->set_neighbors(twinPrevEdge, twinEdge, mainPrevEdge->vertex(), mainEdge->edge(),
+                            mainEdge->face());
+
+    twinVertex->_halfedge = mainNextEdge;
+    twinFace->_halfedge = twinEdge;
+
+    twinPrevPrevEdge->set_neighbors(twinEdge, twinPrevPrevEdge->twin(), twinPrevPrevEdge->vertex(),
+                                    twinPrevPrevEdge->edge(), twinPrevPrevEdge->face());
+    twinPrevEdge->set_neighbors(mainNextEdge, twinPrevEdge->twin(), twinPrevEdge->vertex(),
+                                twinPrevEdge->edge(), mainFace);
+    twinEdge->set_neighbors(mainPrevEdge, mainEdge, twinPrevEdge->vertex(), twinEdge->edge(),
+                            twinEdge->face());
+
+    return e;
 }
 
 /*
@@ -96,9 +194,70 @@ std::optional<Halfedge_Mesh::EdgeRef> Halfedge_Mesh::flip_edge(Halfedge_Mesh::Ed
     the edge that was split, rather than the new edges.
 */
 std::optional<Halfedge_Mesh::VertexRef> Halfedge_Mesh::split_edge(Halfedge_Mesh::EdgeRef e) {
+    Halfedge_Mesh::VertexRef newVertex = new_vertex();
 
-    (void)e;
-    return std::nullopt;
+    Halfedge_Mesh::HalfedgeRef mainEdge = e->_halfedge;
+    Halfedge_Mesh::VertexRef mainVertex = mainEdge->vertex();
+    Halfedge_Mesh::HalfedgeRef mainNextEdge = mainEdge->next();
+    Halfedge_Mesh::HalfedgeRef mainPrevEdge = mainNextEdge->next();
+    Halfedge_Mesh::HalfedgeRef twinEdge = mainEdge->twin();
+    Halfedge_Mesh::HalfedgeRef twinNextEdge = twinEdge->next();
+    Halfedge_Mesh::HalfedgeRef twinPrevEdge = twinNextEdge->next();
+    Halfedge_Mesh::VertexRef twinVertex = twinEdge->vertex();
+
+    Halfedge_Mesh::EdgeRef newCoreEdge = new_edge();
+    Halfedge_Mesh::HalfedgeRef newCoreEdgeMain = new_halfedge();
+    newCoreEdge->_halfedge = newCoreEdgeMain;
+    Halfedge_Mesh::HalfedgeRef newCoreEdgeTwin = new_halfedge();
+
+    Halfedge_Mesh::EdgeRef mainFaceEdge = new_edge();
+    Halfedge_Mesh::HalfedgeRef mainFaceEdgeMain = new_halfedge();
+    mainFaceEdge->_halfedge = mainFaceEdgeMain;
+    Halfedge_Mesh::HalfedgeRef mainFaceEdgeTwin = new_halfedge();
+    Halfedge_Mesh::FaceRef mainFace = mainEdge->face();
+    Halfedge_Mesh::FaceRef newMainFace = new_face();
+    newMainFace->_halfedge = mainFaceEdgeTwin;
+
+    Halfedge_Mesh::EdgeRef twinFaceEdge = new_edge();
+    Halfedge_Mesh::HalfedgeRef twinFaceEdgeMain = new_halfedge();
+    twinFaceEdge->_halfedge = twinFaceEdgeMain;
+    Halfedge_Mesh::HalfedgeRef twinFaceEdgeTwin = new_halfedge();
+    Halfedge_Mesh::FaceRef twinFace = twinEdge->face();
+    Halfedge_Mesh::FaceRef newTwinFace = new_face();
+    newTwinFace->_halfedge = twinFaceEdgeTwin;
+
+    mainFace->_halfedge = mainEdge;
+    twinFace->_halfedge = twinEdge;
+    newVertex->pos = (mainVertex->pos + twinVertex->pos) / 2.0f;
+    newVertex->_halfedge = mainEdge;
+    mainVertex->_halfedge = twinNextEdge;
+    mainEdge->_vertex = newVertex;
+
+    mainNextEdge->set_neighbors(mainFaceEdgeMain, mainNextEdge->twin(), mainNextEdge->vertex(),
+                                mainNextEdge->edge(), mainFace);
+    mainPrevEdge->set_neighbors(newCoreEdgeMain, mainPrevEdge->twin(), mainPrevEdge->vertex(),
+                                mainPrevEdge->edge(), newMainFace);
+    twinEdge->set_neighbors(twinFaceEdgeMain, mainEdge, twinEdge->vertex(), twinEdge->edge(),
+                            twinFace);
+    twinNextEdge->set_neighbors(twinFaceEdgeTwin, twinNextEdge->twin(), twinNextEdge->vertex(),
+                                twinNextEdge->edge(), newTwinFace);
+
+    newCoreEdgeMain->set_neighbors(mainFaceEdgeTwin, newCoreEdgeTwin, mainVertex, newCoreEdge,
+                                   newMainFace);
+    newCoreEdgeTwin->set_neighbors(twinNextEdge, newCoreEdgeMain, newVertex, newCoreEdge,
+                                   newTwinFace);
+
+    mainFaceEdgeMain->set_neighbors(mainEdge, mainFaceEdgeTwin, mainPrevEdge->vertex(),
+                                    mainFaceEdge, mainFace);
+    mainFaceEdgeTwin->set_neighbors(mainPrevEdge, mainFaceEdgeMain, newVertex, mainFaceEdge,
+                                    newMainFace);
+
+    twinFaceEdgeMain->set_neighbors(twinPrevEdge, twinFaceEdgeTwin, newVertex, twinFaceEdge,
+                                    twinFace);
+    twinFaceEdgeTwin->set_neighbors(newCoreEdgeTwin, twinFaceEdgeMain, twinPrevEdge->vertex(),
+                                    twinFaceEdge, newTwinFace);
+
+    return newVertex;
 }
 
 /* Note on the beveling process:
@@ -118,8 +277,8 @@ std::optional<Halfedge_Mesh::VertexRef> Halfedge_Mesh::split_edge(Halfedge_Mesh:
     parameters. These functions are also passed an array of the original vertex
     positions: for bevel_vertex, it has one element, the original vertex position,
     for bevel_edge, two for the two vertices, and for bevel_face, it has the original
-    position of each vertex in order starting from face->halfedge. You should use these 
-    positions, as well as the normal and tangent offset fields to assign positions to 
+    position of each vertex in order starting from face->halfedge. You should use these
+    positions, as well as the normal and tangent offset fields to assign positions to
     the new vertices.
 
     Finally, note that the normal and tangent offsets are not relative values - you
@@ -228,9 +387,63 @@ std::optional<Halfedge_Mesh::FaceRef> Halfedge_Mesh::bevel_face(Halfedge_Mesh::F
 
     // Reminder: You should set the positions of new vertices (v->pos) to be exactly
     // the same as wherever they "started from."
+    int faceLength = 1;
+    Halfedge_Mesh::HalfedgeRef it = f->_halfedge;
+    while(it->next() != f->halfedge()) {
+        faceLength++;
+        it = it->next();
+    }
 
-    (void)f;
-    return std::nullopt;
+    Halfedge_Mesh::HalfedgeRef* orgEdges = new Halfedge_Mesh::HalfedgeRef[faceLength];
+    Halfedge_Mesh::EdgeRef* newEdges = new Halfedge_Mesh::EdgeRef[faceLength];
+    Halfedge_Mesh::HalfedgeRef* newEdgeMains = new Halfedge_Mesh::HalfedgeRef[faceLength];
+    Halfedge_Mesh::HalfedgeRef* newEdgeTwins = new Halfedge_Mesh::HalfedgeRef[faceLength];
+    Halfedge_Mesh::EdgeRef* newInwardEdges = new Halfedge_Mesh::EdgeRef[faceLength];
+    Halfedge_Mesh::HalfedgeRef* newInwardEdgeMains = new Halfedge_Mesh::HalfedgeRef[faceLength];
+    Halfedge_Mesh::HalfedgeRef* newInwardEdgeTwins = new Halfedge_Mesh::HalfedgeRef[faceLength];
+    Halfedge_Mesh::VertexRef* orgVertices = new Halfedge_Mesh::VertexRef[faceLength];
+    Halfedge_Mesh::VertexRef* newVertices = new Halfedge_Mesh::VertexRef[faceLength];
+    Halfedge_Mesh::FaceRef* newFaces = new Halfedge_Mesh::FaceRef[faceLength];
+    Halfedge_Mesh::FaceRef newFace = f;
+
+    it = f->_halfedge;
+    for(int i = 0; i < faceLength; i++) {
+        orgEdges[i] = it;
+        newEdges[i] = new_edge();
+        newEdgeMains[i] = new_halfedge();
+        newEdgeTwins[i] = new_halfedge();
+        newInwardEdges[i] = new_edge();
+        newInwardEdgeMains[i] = new_halfedge();
+        newInwardEdgeTwins[i] = new_halfedge();
+        orgVertices[i] = it->_vertex;
+        newVertices[i] = new_vertex();
+        newFaces[i] = new_face();
+        it = it->next();
+    }
+
+    for(int i = 0; i < faceLength; i++) {
+        int nextIdx = (((i + 1) % faceLength) + faceLength) % faceLength;
+        int prevIdx = (((i - 1) % faceLength) + faceLength) % faceLength;
+        orgEdges[i]->set_neighbors(newInwardEdgeTwins[nextIdx], orgEdges[i]->twin(),
+                                   orgEdges[i]->vertex(), orgEdges[i]->edge(), newFaces[i]);
+        newEdges[i]->_halfedge = newEdgeMains[i];
+        newEdgeMains[i]->set_neighbors(newInwardEdgeMains[i], newEdgeTwins[i], newVertices[nextIdx],
+                                       newEdges[i], newFaces[i]);
+        newEdgeTwins[i]->set_neighbors(newEdgeTwins[nextIdx], newEdgeMains[i], newVertices[i],
+                                       newEdges[i], newFace);
+        newInwardEdges[i]->_halfedge = newInwardEdgeMains[i];
+        newInwardEdgeMains[i]->set_neighbors(orgEdges[i], newInwardEdgeTwins[i], newVertices[i],
+                                             newInwardEdges[i], newFaces[i]);
+        newInwardEdgeTwins[i]->set_neighbors(newEdgeMains[prevIdx], newInwardEdgeMains[i],
+                                             orgVertices[i], newInwardEdges[i], newFaces[prevIdx]);
+        orgVertices[i]->_halfedge = orgEdges[i];
+        newVertices[i]->_halfedge = newInwardEdgeMains[i];
+        newVertices[i]->pos = orgVertices[i]->pos;
+        newFaces[i]->_halfedge = orgEdges[i];
+    }
+    newFace->_halfedge = newEdgeTwins[0];
+
+    return newFace;
 }
 
 /*
@@ -270,7 +483,7 @@ void Halfedge_Mesh::bevel_vertex_positions(const std::vector<Vec3>& start_positi
     (in the orig array) to compute an offset vertex position.
 
     Note that there is a 1-to-1 correspondence between halfedges in
-    newHalfedges and vertex positions in start_positions. So, you can write 
+    newHalfedges and vertex positions in start_positions. So, you can write
     loops of the form:
 
     for(size_t i = 0; i < new_halfedges.size(); i++)
@@ -307,7 +520,7 @@ void Halfedge_Mesh::bevel_edge_positions(const std::vector<Vec3>& start_position
     position.
 
     Note that there is a 1-to-1 correspondence between halfedges in
-    new_halfedges and vertex positions in start_positions. So, you can write 
+    new_halfedges and vertex positions in start_positions. So, you can write
     loops of the form:
 
     for(size_t i = 0; i < new_halfedges.size(); i++)
@@ -467,24 +680,24 @@ void Halfedge_Mesh::loop_subdivide() {
     // the new subdivided (fine) mesh, which has more elements to traverse.  We
     // will then assign vertex positions in
     // the new mesh based on the values we computed for the original mesh.
-    
+
     // Compute new positions for all the vertices in the input mesh using
     // the Loop subdivision rule and store them in Vertex::new_pos.
     //    At this point, we also want to mark each vertex as being a vertex of the
     //    original mesh. Use Vertex::is_new for this.
-    
+
     // Next, compute the subdivided vertex positions associated with edges, and
     // store them in Edge::new_pos.
-    
+
     // Next, we're going to split every edge in the mesh, in any order.
-    // We're also going to distinguish subdivided edges that came from splitting 
-    // an edge in the original mesh from new edges by setting the boolean Edge::is_new. 
+    // We're also going to distinguish subdivided edges that came from splitting
+    // an edge in the original mesh from new edges by setting the boolean Edge::is_new.
     // Note that in this loop, we only want to iterate over edges of the original mesh.
     // Otherwise, we'll end up splitting edges that we just split (and the
     // loop will never end!)
-    
+
     // Now flip any new edge that connects an old and new vertex.
-    
+
     // Finally, copy new vertex positions into the Vertex::pos.
 }
 
