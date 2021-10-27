@@ -843,6 +843,16 @@ void Halfedge_Mesh::loop_subdivide() {
     // Finally, copy new vertex positions into the Vertex::pos.
 }
 
+int Halfedge_Mesh::getDegree(VertexRef v){
+    int d = 0;
+    auto h = v->halfedge();
+    do{
+        d++;
+        h = h->twin()->next();
+    }while(h != v->halfedge());
+    return d;
+}
+
 /*
     Isotropic remeshing. Note that this function returns success in a similar
     manner to the local operations, except with only a boolean value.
@@ -867,7 +877,77 @@ bool Halfedge_Mesh::isotropic_remesh() {
     // but here simply calling collapse_edge() will not erase the elements.
     // You should use collapse_edge_erase() instead for the desired behavior.
 
-    return false;
+    for(auto it = vertices_begin(); it != vertices_end(); it++){
+        if(getDegree(it) != 3){
+            return false;
+        }
+    }
+    
+    float L = 0;
+    uint edgeCount = 0;
+    for(auto it = edges_begin(); it != edges_end(); it++){
+        Vec3 mid = it->halfedge()->vertex()->pos;
+        mid -= it->halfedge()->twin()->vertex()->pos;
+        L += mid.norm();
+        edgeCount++;
+    }
+    L /= edgeCount;
+    float minLength = 4 * L / 3;
+    float maxLength = 4 * L / 5;
+
+    std::vector<Halfedge_Mesh::EdgeRef> toSplit;
+    std::vector<Halfedge_Mesh::EdgeRef> toCollapse;
+    for(auto it = edges_begin(); it != edges_end(); it++){
+        Vec3 mid = it->halfedge()->vertex()->pos;
+        mid -= it->halfedge()->twin()->vertex()->pos;
+        float length = mid.norm();
+        if(length < minLength){
+            toCollapse.push_back(it);
+        }else if(length > maxLength){
+            toSplit.push_back(it);
+        }
+    }
+
+    for(uint i = 0; i < toCollapse.size(); i++){
+        collapse_edge_erase(toCollapse[i]);
+    }
+    for(uint i = 0; i < toSplit.size(); i++){
+        split_edge(toSplit[i]);
+    }
+
+    for(auto it = edges_begin(); it != edges_end(); it++){
+        VertexRef a1 = it->halfedge()->vertex();
+        VertexRef a2 = it->halfedge()->twin()->vertex();
+        VertexRef b1 = it->halfedge()->next()->next()->vertex();
+        VertexRef b2 = it->halfedge()->twin()->next()->next()->vertex();
+        int initDev = abs(getDegree(a1) - 6)
+                    + abs(getDegree(a2) - 6)
+                    + abs(getDegree(b1) - 6)
+                    + abs(getDegree(b2) - 6);
+        int splitDev = abs((getDegree(a1) - 1) - 6)
+                    + abs((getDegree(a2) - 1) - 6)
+                    + abs((getDegree(b1) + 1) - 6)
+                    + abs((getDegree(b2) + 1) - 6);
+        if(splitDev < initDev){
+            split_edge(it);
+        }
+    }
+
+    float w = 0.2f;
+
+    for(auto it = vertices_begin(); it != vertices_end(); it++){
+        Vec3 centroid = it->neighborhood_center();
+        Vec3 normal = it->normal();
+        Vec3 toCentroid = centroid - it->pos;
+        Vec3 toCentroidSansNorm = toCentroid - (normal * dot(toCentroid, normal));
+        it->new_pos = it->pos + w * (toCentroidSansNorm + it->pos);
+    }
+
+    for(auto it = vertices_begin(); it != vertices_end(); it++){
+        it->pos = it->new_pos;
+    }
+
+    return true;
 }
 
 /* Helper type for quadric simplification */
