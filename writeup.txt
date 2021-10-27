@@ -1,1 +1,4 @@
-Just finished EdgeCollapse, EdgeFlip, EdgeSplit and FaceBevel
+Finished EdgeCollapse, EdgeFlip, EdgeSplit and FaceBevel
+Working Triangulation, Linear and Catmull Clark Subdivision
+shuttle.dae 3D Model
+
