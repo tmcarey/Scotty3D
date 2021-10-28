@@ -196,6 +196,8 @@ public:
     // Specifically, when you need to collapse an edge in iostropic_remesh() or simplify(),
     // you should call collapse_edge_erase() instead of collapse_edge()
 
+    int getFaceDegree(FaceRef f);
+
     int getDegree(VertexRef v);
 
     void triangulateFace(FaceRef f);

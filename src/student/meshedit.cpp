@@ -853,6 +853,16 @@ int Halfedge_Mesh::getDegree(VertexRef v){
     return d;
 }
 
+int Halfedge_Mesh::getFaceDegree(FaceRef f){
+    int d = 0;
+    auto h = f->halfedge();
+    do{
+        d++;
+        h = h->next();
+    }while(h != f->halfedge());
+    return d;
+}
+
 /*
     Isotropic remeshing. Note that this function returns success in a similar
     manner to the local operations, except with only a boolean value.
@@ -877,8 +887,8 @@ bool Halfedge_Mesh::isotropic_remesh() {
     // but here simply calling collapse_edge() will not erase the elements.
     // You should use collapse_edge_erase() instead for the desired behavior.
 
-    for(auto it = vertices_begin(); it != vertices_end(); it++){
-        if(getDegree(it) != 3){
+    for(auto it = faces_begin(); it != faces_end(); it++){
+        if(getFaceDegree(it) != 3){
             return false;
         }
     }
@@ -892,28 +902,34 @@ bool Halfedge_Mesh::isotropic_remesh() {
         edgeCount++;
     }
     L /= edgeCount;
-    float minLength = 4 * L / 3;
-    float maxLength = 4 * L / 5;
-
+    float maxLength = 4 * L / 3;
+    float minLength = 4 * L / 5;
     std::vector<Halfedge_Mesh::EdgeRef> toSplit;
-    std::vector<Halfedge_Mesh::EdgeRef> toCollapse;
     for(auto it = edges_begin(); it != edges_end(); it++){
         Vec3 mid = it->halfedge()->vertex()->pos;
         mid -= it->halfedge()->twin()->vertex()->pos;
         float length = mid.norm();
-        if(length < minLength){
-            toCollapse.push_back(it);
-        }else if(length > maxLength){
+        if(length > maxLength){
             toSplit.push_back(it);
         }
-    }
-
-    for(uint i = 0; i < toCollapse.size(); i++){
-        collapse_edge_erase(toCollapse[i]);
     }
     for(uint i = 0; i < toSplit.size(); i++){
         split_edge(toSplit[i]);
     }
+
+    std::vector<Halfedge_Mesh::EdgeRef> toCollapse;
+    for(auto it = edges_begin(); it != edges_end(); ){
+        Vec3 mid = it->halfedge()->vertex()->pos;
+        mid -= it->halfedge()->twin()->vertex()->pos;
+        float length = mid.norm();
+        if(length < minLength){
+           // collapse_edge_erase(it);
+           it++;
+        }  else{
+            it++;
+        }
+    }
+
 
     for(auto it = edges_begin(); it != edges_end(); it++){
         VertexRef a1 = it->halfedge()->vertex();
@@ -929,7 +945,7 @@ bool Halfedge_Mesh::isotropic_remesh() {
                     + abs((getDegree(b1) + 1) - 6)
                     + abs((getDegree(b2) + 1) - 6);
         if(splitDev < initDev){
-            split_edge(it);
+            flip_edge(it);
         }
     }
 
@@ -940,7 +956,10 @@ bool Halfedge_Mesh::isotropic_remesh() {
         Vec3 normal = it->normal();
         Vec3 toCentroid = centroid - it->pos;
         Vec3 toCentroidSansNorm = toCentroid - (normal * dot(toCentroid, normal));
-        it->new_pos = it->pos + w * (toCentroidSansNorm + it->pos);
+        if(isnanf(toCentroidSansNorm.x)){
+            continue;
+        }
+        it->new_pos = it->pos + w * (toCentroidSansNorm);
     }
 
     for(auto it = vertices_begin(); it != vertices_end(); it++){
