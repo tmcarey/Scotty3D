@@ -19,11 +19,14 @@ Spectrum Pathtracer::trace_pixel(size_t x, size_t y) {
     Vec2 xy((float)x, (float)y);
     Vec2 wh((float)out_w, (float)out_h);
 
-    Ray ray = camera.generate_ray(xy / wh);
+    Spectrum acc;
+    Samplers::Rect r(Vec2(1, 1));
+    Vec2 val = (((xy + r.sample()) / wh));
+    Ray ray = camera.generate_ray(val);
     ray.depth = max_depth;
+    auto [emissive, reflected] = trace(ray);
 
     // Pathtracer::trace() returns the incoming light split into emissive and reflected components.
-    auto [emissive, reflected] = trace(ray);
     return emissive + reflected;
 }
 

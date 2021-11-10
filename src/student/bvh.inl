@@ -6,6 +6,68 @@
 namespace PT {
 
 template<typename Primitive>
+void BVH<Primitive>::build_helper(size_t parentIdx,
+                                  size_t max_leaf_size){
+    //Iterate over each axis
+    Node parent = nodes[parentIdx];
+    if(parent.size <= max_leaf_size){
+        return;
+    }
+    size_t partCount = 50;
+    BBox b1Min;
+    BBox b2Min;
+    uint primCountMin1 = 0;
+    uint primCountMin2 = 0;
+    float minSahMetric = MAXFLOAT;
+    size_t minAxis = 0;
+    float minPartVal = 0;
+    for(size_t axis = 0; axis < 3; axis++){
+        for(size_t partIdx = 0; partIdx < partCount; partIdx++){
+            float gap = parent.bbox.max[axis] - parent.bbox.min[axis];
+            float partVal = parent.bbox.min[axis] + (gap * ((float)partIdx / (float)partCount));
+            auto sep = std::partition(primitives.begin() + parent.start, 
+                                      primitives.begin() + parent.start + parent.size, 
+                                      [axis, partVal](const auto& prim){ return prim.bbox().center()[axis] >= partVal; });
+            BBox b1;
+            uint primCount1 = 0;
+            BBox b2;
+            uint primCount2 = 0;
+            for(auto it = primitives.begin() + parent.start; it < primitives.begin() + parent.start + parent.size; it++){
+                if(it < sep){
+                    b1.enclose(it->bbox());
+                    primCount1++; 
+                }else{
+                    b2.enclose(it->bbox());
+                    primCount2++;
+                }
+            }
+            float sahMetric = (b1.surface_area() * primCount1 + b2.surface_area() * primCount2);
+            if(sahMetric < minSahMetric){
+                b1Min = b1;
+                b2Min = b2;
+                primCountMin1 = primCount1;
+                primCountMin2 = primCount2;
+                minSahMetric = sahMetric;
+                minPartVal = partVal;
+                minAxis = axis;
+            }
+        }
+    }
+    if(primCountMin1 == 0 || primCountMin2 == 0){
+        nodes[parentIdx].l = 0;
+        nodes[parentIdx].r = 0;
+        return;
+    }
+    auto sep = std::partition(primitives.begin() + parent.start, primitives.begin() + parent.start + parent.size, [minAxis, minPartVal](const auto& prim){ return prim.bbox().center()[minAxis] >= minPartVal; });
+    size_t lNodeIdx = new_node(b1Min, parent.start, sep - (primitives.begin() + parent.start), 0, 0);
+    nodes[parentIdx].l = lNodeIdx;
+    build_helper(lNodeIdx, max_leaf_size);
+    size_t rNodeIdx = new_node(b2Min, sep - primitives.begin(), (primitives.begin() + parent.start + parent.size) - sep, 0, 0);
+    nodes[parentIdx].r = rNodeIdx;
+    build_helper(rNodeIdx, max_leaf_size);
+}
+
+template<typename Primitive>
 void BVH<Primitive>::build(std::vector<Primitive>&& prims, size_t max_leaf_size) {
 
     // NOTE (PathTracer):
@@ -42,7 +104,36 @@ void BVH<Primitive>::build(std::vector<Primitive>&& prims, size_t max_leaf_size)
     for(const Primitive& prim : primitives) box.enclose(prim.bbox());
 
     new_node(box, 0, primitives.size(), 0, 0);
+    build_helper(0, max_leaf_size);
     root_idx = 0;
+}
+
+template<typename Primitive> void BVH<Primitive>::find_closest_hit(const Ray& ray, uint nodeIdx, Trace* closest) const {
+    Node node = nodes[nodeIdx];
+    if(node.l == node.r){
+        Trace ret;
+        for(auto it = primitives.begin() + node.start; it < primitives.begin() + node.start + node.size; it++) {
+            Trace hit = it->hit(ray);
+            ret = Trace::min(ret, hit);
+        }
+        *closest = ret;
+    }else{
+        Vec2 hit1; 
+        Vec2 hit2;
+        nodes[node.l].bbox.hit(ray, hit1);
+        nodes[node.r].bbox.hit(ray, hit2);
+
+        uint firstNode = (hit1.x <= hit2.x) ? node.l : node.r;
+        uint secondNode = (hit1.x <= hit2.x) ? node.r : node.l;
+        Vec2 hitsecond = hit1.x <= hit2.x ? hit2 : hit1;
+
+
+        find_closest_hit(ray, firstNode, closest);
+        if(!closest->hit){
+            find_closest_hit(ray, secondNode, closest);
+        }
+    }
+
 }
 
 template<typename Primitive> Trace BVH<Primitive>::hit(const Ray& ray) const {
@@ -55,12 +146,9 @@ template<typename Primitive> Trace BVH<Primitive>::hit(const Ray& ray) const {
     // The starter code simply iterates through all the primitives.
     // Again, remember you can use hit() on any Primitive value.
 
-    Trace ret;
-    for(const Primitive& prim : primitives) {
-        Trace hit = prim.hit(ray);
-        ret = Trace::min(ret, hit);
-    }
-    return ret;
+    Trace t;
+    find_closest_hit(ray, 0, &t);
+    return t;
 }
 
 template<typename Primitive>
