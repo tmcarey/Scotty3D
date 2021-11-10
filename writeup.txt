@@ -1,6 +1,3 @@
-Finished EdgeCollapse, EdgeFlip, EdgeSplit and FaceBevel
-Working Triangulation, Linear and Catmull Clark Subdivision
-shuttle.dae 3D Model
-Isotropic Remeshing is *mostly* working, the only issue I had was with collapsing edges, which I have commented out right now. Everything else works correctly (flipping edges, interpolating vertex positions, detecting long/short edges) but for the life of me I can't figure out why the collapse is breaking everything, especially since I've tested my collapse_edge very robustly. I'm guessing its something to do with how I'm iterating over the list and deleting, but I've run out of time so this is the best I could do.
+Finished Tasks 1-3
 
 
