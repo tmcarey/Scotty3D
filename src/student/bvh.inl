@@ -59,10 +59,11 @@ void BVH<Primitive>::build_helper(size_t parentIdx,
         return;
     }
     auto sep = std::partition(primitives.begin() + parent.start, primitives.begin() + parent.start + parent.size, [minAxis, minPartVal](const auto& prim){ return prim.bbox().center()[minAxis] >= minPartVal; });
-    size_t lNodeIdx = new_node(b1Min, parent.start, sep - (primitives.begin() + parent.start), 0, 0);
+    size_t lNodeIdx = new_node(b1Min, parent.start, 
+                               std::distance(primitives.begin() + parent.start, sep), 0, 0);
     nodes[parentIdx].l = lNodeIdx;
     build_helper(lNodeIdx, max_leaf_size);
-    size_t rNodeIdx = new_node(b2Min, sep - primitives.begin(), (primitives.begin() + parent.start + parent.size) - sep, 0, 0);
+    size_t rNodeIdx = new_node(b2Min, std::distance(primitives.begin(), sep), std::distance(sep, primitives.begin() + parent.start + parent.size), 0, 0);
     nodes[parentIdx].r = rNodeIdx;
     build_helper(rNodeIdx, max_leaf_size);
 }
@@ -103,16 +104,16 @@ void BVH<Primitive>::build(std::vector<Primitive>&& prims, size_t max_leaf_size)
     BBox box;
     for(const Primitive& prim : primitives) box.enclose(prim.bbox());
 
-    new_node(box, 0, primitives.size(), 0, 0);
-    build_helper(0, max_leaf_size);
+    size_t initNode = new_node(box, 0, primitives.size(), 0, 0);
+    build_helper(initNode, max_leaf_size);
     root_idx = 0;
 }
 
 template<typename Primitive> void BVH<Primitive>::find_closest_hit(const Ray& ray, uint nodeIdx, Trace* closest) const {
     Node node = nodes[nodeIdx];
-    if(node.l == node.r){
-        Trace ret;
-        for(auto it = primitives.begin() + node.start; it < primitives.begin() + node.start + node.size; it++) {
+    if(node.l == 0 && node.r == 0){
+        Trace ret = *closest;
+        for(auto it = (primitives.begin() + node.start); it < (primitives.begin() + node.start + node.size); it++) {
             Trace hit = it->hit(ray);
             ret = Trace::min(ret, hit);
         }
@@ -120,16 +121,27 @@ template<typename Primitive> void BVH<Primitive>::find_closest_hit(const Ray& ra
     }else{
         Vec2 hit1; 
         Vec2 hit2;
-        nodes[node.l].bbox.hit(ray, hit1);
-        nodes[node.r].bbox.hit(ray, hit2);
+        bool didHit1 = nodes[node.l].bbox.hit(ray, hit1);
+        bool didHit2 = nodes[node.r].bbox.hit(ray, hit2);
 
-        uint firstNode = (hit1.x <= hit2.x) ? node.l : node.r;
-        uint secondNode = (hit1.x <= hit2.x) ? node.r : node.l;
-        Vec2 hitsecond = hit1.x <= hit2.x ? hit2 : hit1;
+        uint firstNode = node.l;
+        uint secondNode = node.r;
+        bool hitFirst = didHit1;
+        bool hitSecond = didHit2;
+        Vec2 secondHitVec = hit2;
+        if(hit1.x >= hit2.x){
+            firstNode = node.r;
+            secondNode = node.l;
+            hitFirst = didHit2;
+            hitSecond = didHit1;
+            secondHitVec = hit1;
+        }
 
 
-        find_closest_hit(ray, firstNode, closest);
-        if(!closest->hit){
+        if(hitFirst){
+            find_closest_hit(ray, firstNode, closest);
+        }
+        if(hitSecond && (!closest->hit || closest->distance >= secondHitVec.x)){
             find_closest_hit(ray, secondNode, closest);
         }
     }

@@ -36,19 +36,22 @@ Trace Sphere::hit(const Ray& ray) const {
     if(discr < 0.0f){
         return ret;
     }
-    float t = -dot(ray.point, ray.dir) - sqrt(discr);
+    float t1 = -dot(ray.point, ray.dir) - sqrt(discr);
+    float t2 = -dot(ray.point, ray.dir) + sqrt(discr);
+    float t = std::min(t1, t2);
+    ret.position = ray.at(t);
+    ret.normal = ret.position.unit();
     if(t != clamp(t, ray.dist_bounds.x, ray.dist_bounds.y)){
-        t = -dot(ray.point, ray.dir) + sqrt(discr);
+        t = std::max(t1,t2);
+        ret.position = ray.at(t);
+        ret.normal = -(ret.position.unit());
         if(t != clamp(t, ray.dist_bounds.x, ray.dist_bounds.y)){
             return ret;
         }
     }
-
     ret.hit = true;
     ret.distance = t;
     ret.position = ray.at(t);
-    ret.normal = ret.position.unit();
-
 
     return ret;
 }
