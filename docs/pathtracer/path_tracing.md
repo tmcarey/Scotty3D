@@ -17,15 +17,15 @@ Up to this point, your renderer only computes object visibility using ray tracin
 
 ## Step 2: `BSDF_Lambertian`
 
-Implement `BSDF_Lambertian::sample`, `BSDF_Lambertian::evaluate`, and `BSDF_Lambertian::pdf`. Note that their interfaces are defined in `rays/bsdf.h`. Task 5 will further discuss sampling BSDFs, so reading ahead may help your understanding.
+Implement `BSDF_Lambertian::scatter`, `BSDF_Lambertian::evaluate`, and `BSDF_Lambertian::pdf`. Note that their interfaces are defined in `rays/bsdf.h`. Task 5 will further discuss sampling BSDFs, so reading ahead may help your understanding.
 
 - `BSDF_Lambertian::albedo` is the ratio of incoming light to reflected light,
   also known as the base color of the Lambertian material.
-- `BSDF_Lambertian::sample` randomly samples a direction from a cosine-weighted hemisphere distribution and returns a `Scatter`. You can compute the attenuation component via `BSDF_Lambertian::evaluate`.
+- `BSDF_Lambertian::scatter` returns a `Scatter` object, with `direction` and `attenuation` components. You can access the material's `sampler` object to randomly sample a direction from a cosine-weighted hemisphere distribution and, you can compute the attenuation component via `BSDF_Lambertian::evaluate`.
 - `BSDF_Lambertian::evaluate` computes the ratio of incoming to outgoing radiance given a pair of directions. Traditionally, BSDFs are specified as the ratio of incoming radiance to outgoing _irradiance_, which necessitates the extra `cos(theta)` factor in the rendering equation. In Scotty3D, however, we expect the BSDF to operate only on radiance, so you must scale the evaluation accordingly.
 - `BSDF_Lambertian::pdf` computes the PDF for sampling some incoming direction given some outgoing direction. However, the Lambertian BSDF in particular does not depend on the outgoing direction. Since we sampled the incoming direction from a cosine-weighted hemisphere distribution, what is its PDF?
 
-Note: a variety of sampling functions are provided in `student/sampler.cpp`. The Lambertian BSDF includes a cosine-weighted hemisphere sampler `Samplers::Hemisphere::Cosine sampler` (see `rays/bsdf.h`).
+Note: a variety of sampling functions are provided in `student/samplers.cpp`. The Lambertian BSDF includes a cosine-weighted hemisphere sampler `Samplers::Hemisphere::Cosine sampler` (see `rays/bsdf.h`).
 
 ## Step 3: `Pathtracer::sample_indirect_lighting`
 
