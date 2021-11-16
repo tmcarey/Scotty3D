@@ -38,10 +38,18 @@ Spectrum Pathtracer::sample_indirect_lighting(const Shading_Info& hit) {
     // lighting at our ray intersection point.
 
     // (1) Randomly sample a new ray direction from the BSDF distribution using BSDF::scatter().
+    Ray ray;
+    ray.dist_bounds = Vec2(0.001f, MAXFLOAT);
+    Scatter scatter = hit.bsdf.scatter(hit.out_dir);
+    ray.point = hit.pos;
+    // ray.dir = hit.object_to_world.rotate(scatter.direction);
+    ray.dir = hit.normal;
+    ray.depth = hit.depth - 1;
 
     // (2) Create a new world-space ray and call Pathtracer::trace() to get incoming light. You
     // should modify time_bounds so that the ray does not intersect at time = 0. Remember to
     // set the new depth value.
+    std::pair<Spectrum, Spectrum> indirect_sample = trace(ray);
 
     // (3) Add contribution due to incoming light scaled by BSDF attenuation. Whether you
     // compute the BSDF scattering PDF should depend on if the BSDF is a discrete distribution
@@ -50,8 +58,9 @@ Spectrum Pathtracer::sample_indirect_lighting(const Shading_Info& hit) {
     // You should only use the indirect component of incoming light (the second value returned
     // by Pathtracer::trace()), as the direct component will be computed in
     // Pathtracer::sample_direct_lighting().
+    float pdf = (hit.bsdf.is_discrete() ? 1.0f : hit.bsdf.pdf(hit.out_dir, ray.dir));
 
-    Spectrum radiance;
+    Spectrum radiance = scatter.attenuation * indirect_sample.second * pdf;
     return radiance;
 }
 
@@ -70,6 +79,15 @@ Spectrum Pathtracer::sample_direct_lighting(const Shading_Info& hit) {
     // Pathtracer::sample_indirect_lighting(), but instead accumulates the emissive component of
     // incoming light (the first value returned by Pathtracer::trace()). Note that since we only
     // want emissive, we can trace a ray with depth = 0.
+    Ray ray;
+    ray.dist_bounds = Vec2(0.1f, MAXFLOAT);
+    Scatter scatter = hit.bsdf.scatter(hit.out_dir);
+    ray.dir = hit.object_to_world.rotate(scatter.direction);
+    ray.point = hit.pos;
+    ray.depth = 0;
+    std::pair<Spectrum, Spectrum> indirect_sample = trace(ray);
+    float pdf = (hit.bsdf.is_discrete() ? 1.0f : hit.bsdf.pdf(hit.out_dir, ray.dir));
+    radiance += scatter.attenuation * indirect_sample.first * pdf;
 
     // TODO (PathTrace): Task 6
 
