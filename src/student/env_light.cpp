@@ -22,7 +22,7 @@ float Env_Map::pdf(Vec3 dir) const {
     // First, return the pdf for a uniform spherical distribution.
     // Second, swap to image_sampler.pdf().
 
-    return 0.0f;
+    return 1.0f / (4.0f * 3.14159265f);
 }
 
 Spectrum Env_Map::evaluate(Vec3 dir) const {
@@ -32,8 +32,15 @@ Spectrum Env_Map::evaluate(Vec3 dir) const {
     // Compute emitted radiance along a given direction by finding the corresponding
     // pixels in the enviornment image. You should bi-linearly interpolate the value
     // between the 4 nearest pixels.
+    float theta = asin(dir.y) + (M_PI / 2.0f);
+    float phi = atan2(dir.z, dir.z) + M_PI;
+    float t = theta - floor(theta);
+    float s = phi - floor(phi);
 
-    return Spectrum{};
+    return t * (s * image.at(floor(phi), floor(theta))
+                + (1 - s) * image.at(ceil(phi), floor(theta)))
+           + (1 - t) * (s * image.at(floor(phi), ceil(theta))
+                        + (1 - s) * image.at(ceil(phi), ceil(theta)));
 }
 
 Vec3 Env_Hemisphere::sample() const {

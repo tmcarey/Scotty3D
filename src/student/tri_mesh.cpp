@@ -43,7 +43,7 @@ Trace Triangle::hit(const Ray& ray) const {
     Vec3 s = ray.point - v_0.position;
     float denom = dot(cross(e1, ray.dir), e2);
     float epsilon = 0.0001f;
-    if(denom <= epsilon){
+    if(fabsf(denom) <= epsilon){
         return ret;
     }
     Vec3 uvtPrep = Vec3(-dot(cross(s, e2), ray.dir), 
