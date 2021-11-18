@@ -25,13 +25,17 @@ static Vec3 refract(Vec3 out_dir, float index_of_refraction, bool& was_internal)
     // you want to compute the 'input' direction that would cause this output,
     // and to do so you can simply find the direction that out_dir would refract
     // _to_, as refraction is symmetric.
+    out_dir = -out_dir;
     Vec2 tangentDir = Vec2(out_dir.x, out_dir.z).unit();
     float sin_theta_i = Vec2(out_dir.x, out_dir.z).norm();
     float sin_theta_o = 0.0f;
-    if(out_dir.y > 0.0f){
-        sin_theta_o = sin_theta_i / (index_of_refraction);
+    float ior = index_of_refraction;
+    if(out_dir.y < 0.0f){
+        //entering surface
+        sin_theta_o = sin_theta_i / (ior);
     }else{
-        sin_theta_o = sin_theta_i * (index_of_refraction);
+        //exiting surface
+        sin_theta_o = sin_theta_i * (ior);
         if(sin_theta_o > 1.0f){
             was_internal = true;
             return Vec3{};
@@ -41,8 +45,8 @@ static Vec3 refract(Vec3 out_dir, float index_of_refraction, bool& was_internal)
     was_internal = false;
     
 
-    return -Vec3(tangentDir.x * sin_theta_o, 
-                cos_theta_o, 
+    return Vec3(tangentDir.x * sin_theta_o, 
+                sign(out_dir.y) * cos_theta_o, 
                 tangentDir.y * sin_theta_o);
 }
 
@@ -54,7 +58,7 @@ Scatter BSDF_Lambertian::scatter(Vec3 out_dir) const {
     // You can use BSDF_Lambertian::evaluate() to compute attenuation.
 
     Scatter ret;
-    ret.direction = sampler.sample().unit();
+    ret.direction = sampler.sample();
     ret.attenuation = evaluate(out_dir, ret.direction);
     return ret;
 }
@@ -66,7 +70,7 @@ Spectrum BSDF_Lambertian::evaluate(Vec3 out_dir, Vec3 in_dir) const {
     // Compute the ratio of reflected/incoming radiance when light from in_dir
     // is reflected through out_dir: albedo * cos(theta).
 
-    return albedo * in_dir.y;
+    return in_dir.y > 0.0f ? albedo * in_dir.y : Spectrum(0,0,0);
 }
 
 float BSDF_Lambertian::pdf(Vec3 out_dir, Vec3 in_dir) const {
@@ -83,7 +87,7 @@ Scatter BSDF_Mirror::scatter(Vec3 out_dir) const {
 
     Scatter ret;
     ret.direction = reflect(out_dir);
-    ret.attenuation = Spectrum(1,1,1);
+    ret.attenuation = reflectance;
     return ret;
 }
 
@@ -97,10 +101,19 @@ Scatter BSDF_Glass::scatter(Vec3 out_dir) const {
 
     // Be wary of your eta1/eta2 ratio - are you entering or leaving the surface?
     // What happens upon total internal reflection?
+    float f = 0;
+    float r0 = pow((index_of_refraction - 1.0f)/ (index_of_refraction + 1.0f), 2.0f);
+    if(out_dir.y > 0.0f){
+        f = r0  + (1 - r0) * pow(1 - out_dir.y, 5.0f);
+    }else{
+        f = r0  + (1 - r0) * pow(1 + out_dir.y, 5.0f);
+    }
+    bool shouldReflect = RNG::coin_flip(f); 
 
     Scatter ret;
-    ret.direction = reflect(out_dir);
-    ret.attenuation = Spectrum(1, 1, 1);
+    bool was_internal = false;
+    ret.direction = shouldReflect ? reflect(out_dir) : refract(out_dir, index_of_refraction, was_internal);
+    ret.attenuation = shouldReflect ? reflectance : was_internal ? Spectrum(0,0,0) : transmittance;
     return ret;
 }
 
@@ -113,7 +126,7 @@ Scatter BSDF_Refract::scatter(Vec3 out_dir) const {
     Scatter ret;
     bool was_internal = false;
     ret.direction = refract(out_dir, index_of_refraction, was_internal);
-    ret.attenuation = was_internal ? Spectrum(0, 0, 0) : Spectrum(1, 1, 1);
+    ret.attenuation = was_internal ? Spectrum(0, 0, 0) : transmittance;
 
     return ret;
 }

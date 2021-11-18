@@ -108,7 +108,7 @@ Spectrum Pathtracer::sample_direct_lighting(const Shading_Info& hit) {
     if(RNG::coin_flip(0.5f)){
         Scatter scatter = hit.bsdf.scatter(hit.out_dir);
         localRay = scatter.direction;
-        ray.dir = scatter.direction;
+        ray.dir = hit.object_to_world.rotate(scatter.direction);
         attenuation = scatter.attenuation;
     }else{
         ray.dir = sample_area_lights(ray.point);

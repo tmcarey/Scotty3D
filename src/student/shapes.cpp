@@ -44,7 +44,7 @@ Trace Sphere::hit(const Ray& ray) const {
     if(t != clamp(t, ray.dist_bounds.x, ray.dist_bounds.y)){
         t = std::max(t1,t2);
         ret.position = ray.at(t);
-        ret.normal = -(ret.position.unit());
+        ret.normal = (ret.position.unit());
         if(t != clamp(t, ray.dist_bounds.x, ray.dist_bounds.y)){
             return ret;
         }
