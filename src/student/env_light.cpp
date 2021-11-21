@@ -2,6 +2,7 @@
 #include "../rays/env_light.h"
 
 #include <limits>
+#include "../rays/pathtracer.h"
 
 namespace PT {
 
@@ -11,8 +12,8 @@ Vec3 Env_Map::sample() const {
 
     // First, implement Samplers::Sphere::Uniform so the following line works.
     // Second, implement Samplers::Sphere::Image and swap to image_sampler
-
-    return image_sampler.sample();
+    Vec3 dir = image_sampler.sample();
+    return dir;
 }
 
 float Env_Map::pdf(Vec3 dir) const {

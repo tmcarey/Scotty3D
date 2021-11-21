@@ -21,7 +21,10 @@ Ray Camera::generate_ray(Vec2 screen_coord) const {
     float t = screen_coord.x;
     float s = screen_coord.y;
     Vec3 finalDir = t * (s * vec11 + (1 - s) * vec10) + (1 - t) * (s * vec01 + (1 - s) * vec00);
-    Ray r(Vec3(0,0,0), finalDir.normalize());
+    float xOrigin = ((rand() / float(RAND_MAX)) * (aperture)) - (aperture / 2.0f);
+    float yOrigin = ((rand() / float(RAND_MAX)) * (aperture)) - (aperture / 2.0f);
+    Vec3 origin(xOrigin,yOrigin,0.0f);
+    Ray r(origin, (finalDir * focal_dist - origin).normalize());
     r.transform(Camera::iview);
     return r;
 }

@@ -114,13 +114,13 @@ Spectrum Pathtracer::sample_direct_lighting(const Shading_Info& hit) {
         ray.dir = sample_area_lights(ray.point);
         localRay = hit.world_to_object.rotate(ray.dir);
         attenuation = hit.bsdf.evaluate(hit.out_dir, localRay);
+        log_ray(ray, 1.0f);
     }
 
     // (3) Create a new world-space ray and call Pathtracer::trace() to get incoming light. You
     // should modify time_bounds so that the ray does not intersect at time = 0. We are again
     // only interested in the emissive component, so the ray depth can be zero.
     std::pair<Spectrum, Spectrum> indirect_sample = trace(ray);
-
 
     // (4) Add estimate of incoming light scaled by BSDF attenuation. Given a sample,
     // we don't know whether it came from the BSDF or the light, so you should use BSDF::evaluate(),
