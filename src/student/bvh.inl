@@ -18,7 +18,7 @@ void BVH<Primitive>::build_helper(size_t parentIdx,
     BBox b2Min;
     uint primCountMin1 = 0;
     uint primCountMin2 = 0;
-    float minSahMetric = MAXFLOAT;
+    float minSahMetric = FLT_MAX;
     size_t minAxis = 0;
     float minPartVal = 0;
     for(size_t axis = 0; axis < 3; axis++){

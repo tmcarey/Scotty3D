@@ -39,7 +39,7 @@ Spectrum Pathtracer::sample_indirect_lighting(const Shading_Info& hit) {
 
     // (1) Randomly sample a new ray direction from the BSDF distribution using BSDF::scatter().
     Ray ray;
-    ray.dist_bounds = Vec2(0.0001f, MAXFLOAT);
+    ray.dist_bounds = Vec2(0.0001f, FLT_MAX);
     Scatter scatter = hit.bsdf.scatter(hit.out_dir);
     ray.dir = hit.object_to_world.rotate(scatter.direction);
     ray.point = hit.pos;
@@ -79,7 +79,7 @@ Spectrum Pathtracer::sample_direct_lighting(const Shading_Info& hit) {
     // incoming light (the first value returned by Pathtracer::trace()). Note that since we only
     // want emissive, we can trace a ray with depth = 0.
     Ray ray;
-    ray.dist_bounds = Vec2(0.0001f, MAXFLOAT);
+    ray.dist_bounds = Vec2(0.0001f, FLT_MAX);
     ray.point = hit.pos;
     ray.depth = 0;
 
