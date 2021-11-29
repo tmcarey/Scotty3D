@@ -78,6 +78,8 @@ Where:
 *   <img src="task2_media/0075.png" style="height:24px"> is the axis of rotation
 *   <img src="task2_media/0076.png" style="height:24px"> is the vector from the base of joint <img src="task2_media/0077.png" style="height:24px"> to the end point of the target joint
 
+Note that <img src="task2_media/0076.png" style="height:24px"> and <img src="task2_media/0054.png" style="height:24px"> (from above) are not the same!
+
 For a more in-depth derivation of Jacobian transpose (and a look into other inverse kinematics algorithms), please check out [this presentation](https://web.archive.org/web/20190501035728/https://autorob.org/lectures/autorob_11_ik_jacobian.pdf). (Pages 45-56 in particular)
 
 Now, all of this will work for updating the angle along a single axis, but we have 3 axes to deal with. Luckily, extending it to 3 dimensions isn't very difficult, we just need to update the angle along each axis independently.
