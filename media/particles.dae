@@ -5,8 +5,8 @@
       <author>Assimp</author>
       <authoring_tool>Assimp Exporter</authoring_tool>
     </contributor>
-    <created>2021-01-08T16:47:33</created>
-    <modified>2021-01-08T16:47:33</modified>
+    <created>2021-12-03T15:29:11</created>
+    <modified>2021-12-03T15:29:11</modified>
     <unit name="meter" meter="1" />
     <up_axis>Y_UP</up_axis>
   </asset>
@@ -27,8 +27,8 @@
       <optics>
         <technique_common>
           <perspective>
-            <xfov sid="xfov">122.33258</xfov>
-            <aspect_ratio>1.8164617</aspect_ratio>
+            <xfov sid="xfov">121.28449</xfov>
+            <aspect_ratio>1.7777778</aspect_ratio>
             <znear sid="znear">0</znear>
             <zfar sid="zfar">1</zfar>
           </perspective>
@@ -37,16 +37,26 @@
     </camera>
   </library_cameras>
   <library_lights>
-    <light id="Emitter_13-S3D-EMITTER-16-light" name="Emitter_13-S3D-EMITTER-16" >
+    <light id="Emitter_13-S3D-EMITTER-17-light" name="Emitter_13-S3D-EMITTER-17" >
       <technique_common>
         <ambient>
           <color sid="color">0.38141674 0.58814317 0.85051548</color>
           <pps>1000</pps>
-          <timestep>0.01</timestep>
+          <timestep>0.0099999998</timestep>
           <constant_attenuation>0.029999999</constant_attenuation>
           <linear_attenuation>5</linear_attenuation>
           <quadratic_attenuation>17.280001</quadratic_attenuation>
         </ambient>
+      </technique_common>
+    </light>
+    <light id="Point_Light_18-S3D-18-light" name="Point_Light_18-S3D-18" >
+      <technique_common>
+        <point>
+          <color sid="color">1 1 1</color>
+          <constant_attenuation>0</constant_attenuation>
+          <linear_attenuation>1</linear_attenuation>
+          <quadratic_attenuation>1</quadratic_attenuation>
+        </point>
       </technique_common>
     </light>
   </library_lights>
@@ -155,28 +165,6 @@
     </material>
   </library_materials>
   <library_geometries>
-    <geometry id="Square-S3D-13_1" name="Square-S3D-13" >
-      <mesh>
-        <source id="Square-S3D-13_1-positions" name="Square-S3D-13_1-positions">
-          <float_array id="Square-S3D-13_1-positions-array" count="12"> -0.5 0 -0.5 -0.5 0 0.5 0.5 0 -0.5 0.5 0 0.5 </float_array>
-          <technique_common>
-            <accessor count="4" offset="0" source="#Square-S3D-13_1-positions-array" stride="3">
-              <param name="X" type="float" />
-              <param name="Y" type="float" />
-              <param name="Z" type="float" />
-            </accessor>
-          </technique_common>
-        </source>
-        <vertices id="Square-S3D-13_1-vertices">
-          <input semantic="POSITION" source="#Square-S3D-13_1-positions" />
-        </vertices>
-        <polylist count="2" material="defaultMaterial">
-          <input offset="0" semantic="VERTEX" source="#Square-S3D-13_1-vertices" />
-          <vcount>3 3 </vcount>
-          <p>2 0 1 3 2 1 </p>
-        </polylist>
-      </mesh>
-    </geometry>
     <geometry id="Square-S3D-14_1" name="Square-S3D-14" >
       <mesh>
         <source id="Square-S3D-14_1-positions" name="Square-S3D-14_1-positions">
@@ -202,7 +190,7 @@
     <geometry id="Square-S3D-15_1" name="Square-S3D-15" >
       <mesh>
         <source id="Square-S3D-15_1-positions" name="Square-S3D-15_1-positions">
-          <float_array id="Square-S3D-15_1-positions-array" count="12"> -0.5 0 0.5 0.5 0 -0.5 -0.5 0 -0.5 0.5 0 0.5 </float_array>
+          <float_array id="Square-S3D-15_1-positions-array" count="12"> -0.5 0 -0.5 -0.5 0 0.5 0.5 0 -0.5 0.5 0 0.5 </float_array>
           <technique_common>
             <accessor count="4" offset="0" source="#Square-S3D-15_1-positions-array" stride="3">
               <param name="X" type="float" />
@@ -217,38 +205,60 @@
         <polylist count="2" material="defaultMaterial">
           <input offset="0" semantic="VERTEX" source="#Square-S3D-15_1-vertices" />
           <vcount>3 3 </vcount>
+          <p>2 0 1 3 2 1 </p>
+        </polylist>
+      </mesh>
+    </geometry>
+    <geometry id="Square-S3D-16_1" name="Square-S3D-16" >
+      <mesh>
+        <source id="Square-S3D-16_1-positions" name="Square-S3D-16_1-positions">
+          <float_array id="Square-S3D-16_1-positions-array" count="12"> -0.5 0 0.5 0.5 0 -0.5 -0.5 0 -0.5 0.5 0 0.5 </float_array>
+          <technique_common>
+            <accessor count="4" offset="0" source="#Square-S3D-16_1-positions-array" stride="3">
+              <param name="X" type="float" />
+              <param name="Y" type="float" />
+              <param name="Z" type="float" />
+            </accessor>
+          </technique_common>
+        </source>
+        <vertices id="Square-S3D-16_1-vertices">
+          <input semantic="POSITION" source="#Square-S3D-16_1-positions" />
+        </vertices>
+        <polylist count="2" material="defaultMaterial">
+          <input offset="0" semantic="VERTEX" source="#Square-S3D-16_1-vertices" />
+          <vcount>3 3 </vcount>
           <p>2 0 1 1 0 3 </p>
         </polylist>
       </mesh>
     </geometry>
-    <geometry id="Emitter_13-S3D-EMITTER-16-MESH" name="Emitter_13-S3D-EMITTER-16-MESH" >
+    <geometry id="Emitter_13-S3D-EMITTER-17-MESH" name="Emitter_13-S3D-EMITTER-17-MESH" >
       <mesh>
-        <source id="Emitter_13-S3D-EMITTER-16-MESH-positions" name="Emitter_13-S3D-EMITTER-16-MESH-positions">
-          <float_array id="Emitter_13-S3D-EMITTER-16-MESH-positions-array" count="126"> -0.52573109 0.85065079 0 -0.80901694 0.49999997 0.30901697 -0.30901697 0.80901694 0.49999997 -0.85065079 0 0.52573109 -0.49999997 0.30901697 0.80901694 0 0.52573109 0.85065079 0 0.99999994 0 0.30901697 0.80901694 0.49999997 0.52573109 0.85065079 0 -0.30901697 0.80901694 -0.49999997 0.30901697 0.80901694 -0.49999997 0 0.52573109 -0.85065079 -0.80901694 0.49999997 -0.30901697 -0.49999997 0.30901697 -0.80901694 -0.85065079 0 -0.52573109 -0.99999994 0 0 0.80901694 0.49999997 0.30901697 0.49999997 0.30901697 0.80901694 0.85065079 0 0.52573109 0 0 0.99999994 -0.49999997 -0.30901697 0.80901694 0 -0.52573109 0.85065079 -0.80901694 -0.49999997 0.30901697 -0.80901694 -0.49999997 -0.30901697 -0.52573109 -0.85065079 0 -0.49999997 -0.30901697 -0.80901694 0 0 -0.99999994 0 -0.52573109 -0.85065079 0.49999997 0.30901697 -0.80901694 0.80901694 0.49999997 -0.30901697 0.85065079 0 -0.52573109 0.52573109 -0.85065079 0 0.80901694 -0.49999997 0.30901697 0.30901697 -0.80901694 0.49999997 0.49999997 -0.30901697 0.80901694 0 -0.99999994 0 -0.30901697 -0.80901694 0.49999997 0.30901697 -0.80901694 -0.49999997 -0.30901697 -0.80901694 -0.49999997 0.80901694 -0.49999997 -0.30901697 0.49999997 -0.30901697 -0.80901694 0.99999994 0 0 </float_array>
+        <source id="Emitter_13-S3D-EMITTER-17-MESH-positions" name="Emitter_13-S3D-EMITTER-17-MESH-positions">
+          <float_array id="Emitter_13-S3D-EMITTER-17-MESH-positions-array" count="126"> -0.52573109 0.85065079 0 -0.80901694 0.49999997 0.30901697 -0.30901697 0.80901694 0.49999997 -0.85065079 0 0.52573109 -0.49999997 0.30901697 0.80901694 0 0.52573109 0.85065079 0 0.99999994 0 0.30901697 0.80901694 0.49999997 0.52573109 0.85065079 0 -0.30901697 0.80901694 -0.49999997 0.30901697 0.80901694 -0.49999997 0 0.52573109 -0.85065079 -0.80901694 0.49999997 -0.30901697 -0.49999997 0.30901697 -0.80901694 -0.85065079 0 -0.52573109 -0.99999994 0 0 0.80901694 0.49999997 0.30901697 0.49999997 0.30901697 0.80901694 0.85065079 0 0.52573109 0 0 0.99999994 -0.49999997 -0.30901697 0.80901694 0 -0.52573109 0.85065079 -0.80901694 -0.49999997 0.30901697 -0.80901694 -0.49999997 -0.30901697 -0.52573109 -0.85065079 0 -0.49999997 -0.30901697 -0.80901694 0 0 -0.99999994 0 -0.52573109 -0.85065079 0.49999997 0.30901697 -0.80901694 0.80901694 0.49999997 -0.30901697 0.85065079 0 -0.52573109 0.52573109 -0.85065079 0 0.80901694 -0.49999997 0.30901697 0.30901697 -0.80901694 0.49999997 0.49999997 -0.30901697 0.80901694 0 -0.99999994 0 -0.30901697 -0.80901694 0.49999997 0.30901697 -0.80901694 -0.49999997 -0.30901697 -0.80901694 -0.49999997 0.80901694 -0.49999997 -0.30901697 0.49999997 -0.30901697 -0.80901694 0.99999994 0 0 </float_array>
           <technique_common>
-            <accessor count="42" offset="0" source="#Emitter_13-S3D-EMITTER-16-MESH-positions-array" stride="3">
+            <accessor count="42" offset="0" source="#Emitter_13-S3D-EMITTER-17-MESH-positions-array" stride="3">
               <param name="X" type="float" />
               <param name="Y" type="float" />
               <param name="Z" type="float" />
             </accessor>
           </technique_common>
         </source>
-        <source id="Emitter_13-S3D-EMITTER-16-MESH-normals" name="Emitter_13-S3D-EMITTER-16-MESH-normals">
-          <float_array id="Emitter_13-S3D-EMITTER-16-MESH-normals-array" count="126"> 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 </float_array>
+        <source id="Emitter_13-S3D-EMITTER-17-MESH-normals" name="Emitter_13-S3D-EMITTER-17-MESH-normals">
+          <float_array id="Emitter_13-S3D-EMITTER-17-MESH-normals-array" count="126"> 0.52573115 -0.85065079 0 0.809017 -0.5 -0.30901697 0.30901697 -0.809017 -0.5 0.85065079 0 -0.52573115 0.5 -0.30901697 -0.809017 0 -0.52573109 -0.85065085 0 -1 0 -0.309017 -0.80901694 -0.50000006 -0.52573115 -0.85065079 0 0.309017 -0.80901694 0.50000006 -0.30901697 -0.809017 0.5 0 -0.52573115 0.85065085 0.809017 -0.5 0.30901697 0.5 -0.30901697 0.809017 0.85065079 0 0.52573115 1 0 0 -0.809017 -0.5 -0.30901697 -0.5 -0.30901697 -0.809017 -0.85065085 0 -0.52573109 0 0 -1 0.50000006 0.309017 -0.80901694 0 0.52573115 -0.85065079 0.809017 0.5 -0.30901697 0.809017 0.5 0.30901697 0.52573115 0.85065079 0 0.50000006 0.309017 0.80901694 0 0 1 0 0.52573115 0.85065079 -0.5 -0.30901697 0.809017 -0.809017 -0.5 0.30901697 -0.85065085 0 0.52573109 -0.52573115 0.85065079 0 -0.809017 0.5 -0.30901697 -0.30901697 0.809017 -0.5 -0.5 0.30901697 -0.809017 0 1 0 0.309017 0.80901694 -0.50000006 -0.309017 0.80901694 0.50000006 0.30901697 0.809017 0.5 -0.809017 0.5 0.30901697 -0.5 0.30901697 0.809017 -1 0 0 </float_array>
           <technique_common>
-            <accessor count="42" offset="0" source="#Emitter_13-S3D-EMITTER-16-MESH-normals-array" stride="3">
+            <accessor count="42" offset="0" source="#Emitter_13-S3D-EMITTER-17-MESH-normals-array" stride="3">
               <param name="X" type="float" />
               <param name="Y" type="float" />
               <param name="Z" type="float" />
             </accessor>
           </technique_common>
         </source>
-        <vertices id="Emitter_13-S3D-EMITTER-16-MESH-vertices">
-          <input semantic="POSITION" source="#Emitter_13-S3D-EMITTER-16-MESH-positions" />
+        <vertices id="Emitter_13-S3D-EMITTER-17-MESH-vertices">
+          <input semantic="POSITION" source="#Emitter_13-S3D-EMITTER-17-MESH-positions" />
         </vertices>
         <polylist count="80" material="defaultMaterial">
-          <input offset="0" semantic="VERTEX" source="#Emitter_13-S3D-EMITTER-16-MESH-vertices" />
-          <input offset="0" semantic="NORMAL" source="#Emitter_13-S3D-EMITTER-16-MESH-normals" />
+          <input offset="0" semantic="VERTEX" source="#Emitter_13-S3D-EMITTER-17-MESH-vertices" />
+          <input offset="0" semantic="NORMAL" source="#Emitter_13-S3D-EMITTER-17-MESH-normals" />
           <vcount>3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 </vcount>
           <p>0 1 2 3 4 1 5 2 4 1 4 2 0 2 6 5 7 2 8 6 7 2 7 6 0 6 9 8 10 6 11 9 10 6 10 9 0 9 12 11 13 9 14 12 13 9 13 12 0 12 1 14 15 12 3 1 15 12 15 1 8 7 16 5 17 7 18 16 17 7 17 16 5 4 19 3 20 4 21 19 20 4 20 19 3 15 22 14 23 15 24 22 23 15 23 22 14 13 25 11 26 13 27 25 26 13 26 25 11 10 28 8 29 10 30 28 29 10 29 28 31 32 33 18 34 32 21 33 34 32 34 33 31 33 35 21 36 33 24 35 36 33 36 35 31 35 37 24 38 35 27 37 38 35 38 37 31 37 39 27 40 37 30 39 40 37 40 39 31 39 32 30 41 39 18 32 41 39 41 32 21 34 19 18 17 34 5 19 17 34 17 19 24 36 22 21 20 36 3 22 20 36 20 22 27 38 25 24 23 38 14 25 23 38 23 25 30 40 28 27 26 40 11 28 26 40 26 28 18 41 16 30 29 41 8 16 29 41 29 16 </p>
         </polylist>
@@ -259,9 +269,9 @@
   </library_controllers>
   <library_visual_scenes>
     <visual_scene id="node" name="">
-      <node id="Square-S3D-13" name="Square-S3D-13" type="NODE">
-        <matrix sid="matrix">-8.7422769e-08 -0.99999952 0 -1 0.99999982 -8.7422741e-08 0 0.5 0 0 1 0 0 0 0 1</matrix>
-        <instance_geometry url="#Square-S3D-13_1">
+      <node id="Square-S3D-14" name="Square-S3D-14" type="NODE">
+        <matrix sid="matrix">-4.3711381e-08 -0.99999952 0 -1 0.99999982 -4.3711367e-08 0 0.5 0 0 0.99999982 0 0 0 0 1</matrix>
+        <instance_geometry url="#Square-S3D-14_1">
           <bind_material>
             <technique_common>
               <instance_material symbol="defaultMaterial" target="#lambertian">
@@ -270,9 +280,9 @@
           </bind_material>
         </instance_geometry>
       </node>
-      <node id="Square-S3D-14" name="Square-S3D-14" type="NODE">
-        <matrix sid="matrix">-8.7422769e-08 -0.99999976 0 -0.46574289 0.99999982 -8.7422762e-08 0 0.5 0 0 1 0 0 0 0 1</matrix>
-        <instance_geometry url="#Square-S3D-14_1">
+      <node id="Square-S3D-15" name="Square-S3D-15" type="NODE">
+        <matrix sid="matrix">-4.3711381e-08 -0.99999976 0 -0.46574289 0.99999982 -4.3711378e-08 0 0.5 0 0 0.99999982 0 0 0 0 1</matrix>
+        <instance_geometry url="#Square-S3D-15_1">
           <bind_material>
             <technique_common>
               <instance_material symbol="defaultMaterial" target="#lambertian_1">
@@ -281,9 +291,9 @@
           </bind_material>
         </instance_geometry>
       </node>
-      <node id="Square-S3D-15" name="Square-S3D-15" type="NODE">
+      <node id="Square-S3D-16" name="Square-S3D-16" type="NODE">
         <matrix sid="matrix">1 0 0 -0.75545228 0 1 0 0 0 0 1 0 0 0 0 1</matrix>
-        <instance_geometry url="#Square-S3D-15_1">
+        <instance_geometry url="#Square-S3D-16_1">
           <bind_material>
             <technique_common>
               <instance_material symbol="defaultMaterial" target="#lambertian_2">
@@ -292,13 +302,13 @@
           </bind_material>
         </instance_geometry>
       </node>
-      <node id="Emitter_13-S3D-EMITTER-16" name="Emitter_13-S3D-EMITTER-16" type="NODE">
-        <matrix sid="matrix">0.035369299 -0.72973269 0.68281698 0.13112357 -0.049727228 -0.68368316 -0.72808272 1.9511223 0.99813628 -0.008202821 -0.060468979 0 0 0 0 1</matrix>
-        <instance_light url="#Emitter_13-S3D-EMITTER-16-light"/>
+      <node id="Emitter_13-S3D-EMITTER-17" name="Emitter_13-S3D-EMITTER-17" type="NODE">
+        <matrix sid="matrix">0.032704618 -0.76467848 0.64358163 -0.25702831 -0.051517818 -0.64435983 -0.76298517 1.5269272 0.9981364 -0.008202781 -0.060468107 0.29359281 0 0 0 1</matrix>
+        <instance_light url="#Emitter_13-S3D-EMITTER-17-light"/>
       </node>
-      <node id="Emitter_13-S3D-EMITTER-16-EMITTER_ANIM_NODE" name="Emitter_13-S3D-EMITTER-16-EMITTER_ANIM_NODE" type="NODE">
+      <node id="Emitter_13-S3D-EMITTER-17-EMITTER_ANIM_NODE" name="Emitter_13-S3D-EMITTER-17-EMITTER_ANIM_NODE" type="NODE">
         <matrix sid="matrix">1 0 0 2 0 1 0 0 0 0 1 0 0 0 0 1</matrix>
-        <instance_geometry url="#Emitter_13-S3D-EMITTER-16-MESH">
+        <instance_geometry url="#Emitter_13-S3D-EMITTER-17-MESH">
           <bind_material>
             <technique_common>
               <instance_material symbol="defaultMaterial" target="#material_3">
@@ -307,8 +317,12 @@
           </bind_material>
         </instance_geometry>
       </node>
+      <node id="Point_Light_18-S3D-18" name="Point_Light_18-S3D-18" type="NODE">
+        <matrix sid="matrix">1 0 0 -0.74904919 0 1 0 0.9410817 0 0 1 0 0 0 0 1</matrix>
+        <instance_light url="#Point_Light_18-S3D-18-light"/>
+      </node>
       <node id="S3D-RENDER_CAM_NODE" name="S3D-RENDER_CAM_NODE" type="NODE">
-        <matrix sid="matrix">0.99999398 0.0004143955 -0.0034703012 -0.6231389 0 0.99294585 0.11856959 1.5450569 0.0034949556 -0.11856886 0.99293977 2.2816241 0 0 0 1</matrix>
+        <matrix sid="matrix">0.5620352 0.20849724 -0.80040324 -2.6012156 -7.4505797e-09 0.9677068 0.25207821 0.81922442 0.82711327 -0.14167684 0.54388523 1.7677814 0 0 0 1</matrix>
         <instance_camera url="#S3D-RENDER_CAM_NODE-camera"/>
       </node>
     </visual_scene>
